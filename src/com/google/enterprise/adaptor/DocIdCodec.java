@@ -14,7 +14,10 @@
 
 package com.google.enterprise.adaptor;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.net.URISyntaxException;
 
 /**
@@ -37,7 +40,13 @@ class DocIdCodec implements DocIdEncoder, DocIdDecoder {
 
   public URI encodeDocId(DocId docId) {
     if (isDocIdUrl) {
-      return URI.create(docId.getUniqueId());
+      try {
+        String tmp = URLEncoder.encode(docId.getUniqueId(), "UTF-8");
+        return URI.create(tmp.replaceAll("%2F", "/").replaceAll("%3A", ":"));
+      } catch (UnsupportedEncodingException ex) {
+        ex.printStackTrace();
+        throw new IllegalStateException(ex);
+      }
     } else {
       URI resource;
       String uniqueId = docId.getUniqueId();
@@ -64,7 +73,13 @@ class DocIdCodec implements DocIdEncoder, DocIdDecoder {
   /** Given a URI that was used in feed file, convert back to doc id. */
   public DocId decodeDocId(URI uri) {
     if (isDocIdUrl) {
-      return new DocId(uri.toString());
+      try {
+        String tmp = URLDecoder.decode(uri.toString(), "UTF-8");
+        return new DocId(tmp);
+      } catch (UnsupportedEncodingException ex) {
+        ex.printStackTrace();
+        throw new IllegalStateException(ex);
+      }
     } else {
       String basePath = baseDocUri.getPath();
       if (!uri.getPath().startsWith(basePath)) {

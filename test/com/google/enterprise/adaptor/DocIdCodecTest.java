@@ -36,6 +36,17 @@ public class DocIdCodecTest {
   }
 
   @Test
+  public void testIllegarCharacterUri() {
+    // create local codec with isDocIdUrl = true
+    DocIdCodec codec = new DocIdCodec(baseUri, true);
+    // test " ", ^, %, cyrillic Я, chinnese 字
+    String unencoded_id = "http://anyhost/some/ ^%docid1_5%205_Я_字_:_%20";
+    final URI golden = URI.create("http://anyhost/some/+%5E%25docid1_5%25205_%D0%AF_%E5%AD%97_:_%2520");
+    assertEquals(golden, codec.encodeDocId(new DocId(unencoded_id)));
+    assertEquals(unencoded_id, codec.decodeDocId(golden).getUniqueId());
+  }
+
+  @Test
   public void testRelativeDot() {
     String docId = ".././hi/.h/";
     URI uri = codec.encodeDocId(new DocId(docId));
